@@ -18,8 +18,8 @@ import com.amazonaws.services.ec2.model.*;
 
 public class AWSCredential {
 	public static void main(String[] args) {
-		String AccessKeyID = "AKIAJF3QROSKAZIDNE7A";
-		String SecretAccessKey = "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";
+		String AccessKeyID = "";
+		String SecretAccessKey = “”;
 		String keyName = "keyFromEclipse";
 		
 	    AWSCredentialsProvider provider;

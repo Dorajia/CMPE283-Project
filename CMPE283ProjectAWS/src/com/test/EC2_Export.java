@@ -24,8 +24,8 @@ public class EC2_Export {
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		String AccessKeyID = "AKIAJF3QROSKAZIDNE7A";
-		String SecretAccessKey = "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";
+		String AccessKeyID = "";
+		String SecretAccessKey = "";
 		
 	    AWSCredentialsProvider provider;
 	    if ( AccessKeyID != null && SecretAccessKey != null ) {
