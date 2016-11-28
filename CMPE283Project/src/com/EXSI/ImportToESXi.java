@@ -33,9 +33,12 @@ import java.net.*;
 import javax.net.ssl.*;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.ComputeResource;
+import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.HttpNfcLease;
+import com.vmware.vim25.mo.InventoryNavigator;
+import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.ServiceInstance;
  
@@ -70,27 +73,36 @@ public class ImportToESXi
         String newVmName = "YuanyuanJia-eclipse";
         String hostip = "192.168.170.135";
 //        String entityType = "VirtualMachine";
-        String ovfLocal = "/Users/Dora/Desktop/YuanyuanJia-ubuntu-1604-322-2.ovf";
+        String ovfLocal = "/Users/Dora/Desktop/export-i-fgtsjqv3.ovf";
         
         HostSystem host = (HostSystem) si.getSearchIndex().findByIp(null, hostip, false);
  
         System.out.println("Host Name : " + host.getName());
         System.out.println("Network : " + host.getNetworks()[0].getName());
         System.out.println("Datastore : " + host.getDatastores()[0].getName());
- 
+       
         Folder vmFolder = (Folder) host.getVms()[0].getParent();
- 
+		ManagedEntity[] datacenter = new InventoryNavigator(si.getRootFolder()).searchManagedEntities("Datacenter");
+		for(ManagedEntity managedEntity : datacenter){
+			Datacenter datacenterobj = (Datacenter) managedEntity;
+			System.out.println("Datacenter Folder: "+ datacenterobj.getName());
+			System.out.println("VM Folder: "+ datacenterobj.getVmFolder().getName());
+			vmFolder = datacenterobj.getVmFolder();
+		}
+       // vmFolder = (Folder) si.getSearchIndex().findByInventoryPath(host.getDatastores()[0].getName()+"/vm/");
+        
         OvfCreateImportSpecParams importSpecParams = new OvfCreateImportSpecParams();
         importSpecParams.setHostSystem(host.getMOR());
         importSpecParams.setLocale("US");
         importSpecParams.setEntityName(newVmName);
         importSpecParams.setDeploymentOption("");
         OvfNetworkMapping networkMapping = new OvfNetworkMapping();
-        networkMapping.setName("Network 1");
+        networkMapping.setName("VM Network");
         networkMapping.setNetwork(host.getNetworks()[0].getMOR()); // network);
         importSpecParams.setNetworkMapping(new OvfNetworkMapping[] { networkMapping });
-        importSpecParams.setPropertyMapping(null);
- 
+       // importSpecParams.setPropertyMapping(null);
+        importSpecParams.setDiskProvisioning("Thin");
+        
         String ovfDescriptor = readOvfContent(ovfLocal);
         if (ovfDescriptor == null)
         {
@@ -102,10 +114,10 @@ public class ImportToESXi
         System.out.println("ovfDesc:" + ovfDescriptor);
  
         ResourcePool rp = ((ComputeResource)host.getParent()).getResourcePool();
- 
+        System.out.println("Resource pool: "+rp.getName());
+        
         OvfCreateImportSpecResult ovfImportResult = si.getOvfManager().createImportSpec(
                 ovfDescriptor, rp, host.getDatastores()[0], importSpecParams);
- 
         if(ovfImportResult==null)
         {
             si.getServerConnection().logout();
@@ -116,9 +128,12 @@ public class ImportToESXi
         System.out.println("Total bytes: " + totalBytes);
  
         HttpNfcLease httpNfcLease = null;
- 
-        httpNfcLease = rp.importVApp(ovfImportResult.getImportSpec(), vmFolder, host);
- 
+        VirtualMachineImportSpec importVM = new  VirtualMachineImportSpec();
+        importVM = (VirtualMachineImportSpec) ovfImportResult.importSpec ;
+        //httpNfcLease = rp.importVApp(ovfImportResult.importSpec, vmFolder, host);
+        VirtualMachineConfigSpec configSpec = new VirtualMachineConfigSpec();
+       // importVM.setConfigSpec(configSpec);
+        httpNfcLease = rp.importVApp(importVM, vmFolder, host);
         // Wait until the HttpNfcLeaseState is ready
         HttpNfcLeaseState hls;
         for(;;)
@@ -151,6 +166,7 @@ public class ImportToESXi
                     {
                         System.out.println("Import key==OvfFileItem device id: " + deviceKey);
                         String absoluteFile = new File(ovfLocal).getParent() + File.separator + ovfFileItem.getPath();
+                        absoluteFile = "/Users/Dora/Desktop/export-i-fgtsjqv3-disk-1.vmdk";
                         String urlToPost = deviceUrl.getUrl().replace("*", hostip);
                         uploadVmdkFile(ovfFileItem.isCreate(), absoluteFile, urlToPost, bytesAlreadyWritten, totalBytes);
                         bytesAlreadyWritten += ovfFileItem.getSize();

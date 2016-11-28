@@ -34,7 +34,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
- 
+import java.rmi.RemoteException;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
@@ -42,16 +43,20 @@ import javax.net.ssl.SSLSession;
 import com.vmware.vim25.HttpNfcLeaseDeviceUrl;
 import com.vmware.vim25.HttpNfcLeaseInfo;
 import com.vmware.vim25.HttpNfcLeaseState;
+import com.vmware.vim25.InvalidProperty;
 import com.vmware.vim25.OvfCreateDescriptorParams;
 import com.vmware.vim25.OvfCreateDescriptorResult;
 import com.vmware.vim25.OvfFile;
+import com.vmware.vim25.RuntimeFault;
+import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.HttpNfcLease;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ServiceInstance;
-import com.vmware.vim25.mo.VirtualApp;
+import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
+import com.EXSI.command;
  
 /**
 http://www.doublecloud.org/2010/04/how-to-import-and-export-ovf-packages/ 
@@ -60,7 +65,11 @@ http://www.doublecloud.org/2010/04/how-to-import-and-export-ovf-packages/
 public class ExportFromESXi
 {
    public static LeaseProgressUpdater leaseProgUpdater;
- 
+	private static String ESXURL;
+	private static String ESXUSERNAME;
+	private static String ESXPASSWORD;
+	private static String VMIPADDRESS;
+	
      public static void main(String[] args) throws Exception
       {
  //       if (args.length != 7)
@@ -72,9 +81,8 @@ public class ExportFromESXi
  
         //ServiceInstance si = new ServiceInstance(new URL(args[0]), args[1], args[2], true);
         ServiceInstance si = new ServiceInstance(new URL("https://192.168.170.135/sdk"), "root", "yuanyuan", true);
-        String vAppOrVmName = "YuanyuanJia-ubuntu-1604-322-2";
+        String vmName = "server";
         String hostip = "192.168.170.135";
-        String entityType = "VirtualMachine";
         String targetDir = "/Users/Dora/Desktop/";
  
         HostSystem host = (HostSystem) si.getSearchIndex().findByIp(null, hostip, false);
@@ -83,21 +91,38 @@ public class ExportFromESXi
         System.out.println("Network : " + host.getNetworks()[0].getName());
         System.out.println("Datastore : " + host.getDatastores()[0].getName());
  
-        InventoryNavigator iv = new InventoryNavigator(si.getRootFolder());
- 
+        VirtualMachine findvm = findVM(vmName,si);
+		if (findvm == null ) {
+			System.out.println("No such VM");;
+		}	
+		else{
+			VMIPADDRESS = findvm.getGuest().getIpAddress();
+			System.out.println(VMIPADDRESS);
+			command.runCommand("apt-get install python-pip -y", VMIPADDRESS);
+			command.runCommand("pip install awscli", VMIPADDRESS);
+			command.runCommand("vmware-uninstall-tools.pl",VMIPADDRESS);
+			Task poweroffTask = findvm.powerOffVM_Task();
+			poweroffTask.waitForTask();
+			if(poweroffTask.equals(Task.SUCCESS)){
+				exportOvf(findvm,targetDir,si,hostip);
+		}
+
+        si.getServerConnection().logout();
+      }
+      }
+     
+    private static VirtualMachine findVM(String vmName, ServiceInstance si) throws InvalidProperty, RuntimeFault, RemoteException{
+		VirtualMachine findvm;
+		Folder rootFolder = si.getRootFolder(); 
+
+		findvm = (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity("VirtualMachine",vmName);
+		return findvm;
+    }
+    
+ 	private static void exportOvf(VirtualMachine VM, String targetDir, ServiceInstance si, String hostip) throws IOException{
         HttpNfcLease hnLease = null;
+        hnLease = VM.exportVm();
  
-        ManagedEntity me = null;
-        if (entityType.equals("VirtualApp"))
-        {
-          me = iv.searchManagedEntity("VirtualApp", vAppOrVmName);
-          hnLease = ((VirtualApp)me).exportVApp();
-        }
-        else
-        {
-          me = iv.searchManagedEntity("VirtualMachine", vAppOrVmName);
-          hnLease = ((VirtualMachine)me).exportVm();
-        }
  
         // Wait until the HttpNfcLeaseState is ready
         HttpNfcLeaseState hls;
@@ -156,9 +181,9 @@ public class ExportFromESXi
           OvfCreateDescriptorParams ovfDescParams = new OvfCreateDescriptorParams();
           ovfDescParams.setOvfFiles(ovfFiles);
           OvfCreateDescriptorResult ovfCreateDescriptorResult =
-            si.getOvfManager().createDescriptor(me, ovfDescParams);
+            si.getOvfManager().createDescriptor(VM, ovfDescParams);
  
-          String ovfPath = targetDir + vAppOrVmName + ".ovf";
+          String ovfPath = targetDir + VM.getName() + ".ovf";
           FileWriter out = new FileWriter(ovfPath);
           out.write(ovfCreateDescriptorResult.getOvfDescriptor());
           out.close();
@@ -170,8 +195,7 @@ public class ExportFromESXi
         hnLease.httpNfcLeaseProgress(100);
         hnLease.httpNfcLeaseComplete();
  
-        si.getServerConnection().logout();
-      }
+ 	}
  
     private static void printHttpNfcLeaseInfo(HttpNfcLeaseInfo info)
     {
