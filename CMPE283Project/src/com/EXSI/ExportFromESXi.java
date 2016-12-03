@@ -33,8 +33,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -69,22 +72,16 @@ public class ExportFromESXi
 	private static String ESXUSERNAME;
 	private static String ESXPASSWORD;
 	private static String VMIPADDRESS;
-	
-     public static void main(String[] args) throws Exception
+	private static List<String> vmdklist = new ArrayList<String>();
+     
+	public static List<String> exportfromesxi() throws IOException
       {
- //       if (args.length != 7)
- //       {
- //         System.out.println("java ExportOvfToLocal <SdkUrl> <username> <password> <VappOrVmName> <hostip> <VirtualMachine|VirtualApp> <localDir>");
- //         System.out.println("java ExportOvfToLocal https://10.20.152.74/sdk root password NewVM1 10.20.152.74 VirtualMachine C:\\Temp\\ovf\\");
- //         return;
- //       }
- 
-        //ServiceInstance si = new ServiceInstance(new URL(args[0]), args[1], args[2], true);
+    	
         ServiceInstance si = new ServiceInstance(new URL("https://192.168.170.135/sdk"), "root", "yuanyuan", true);
         String vmName = "server";
         String hostip = "192.168.170.135";
         String targetDir = "/Users/Dora/Desktop/";
- 
+        List<String> vmdkfile;
         HostSystem host = (HostSystem) si.getSearchIndex().findByIp(null, hostip, false);
  
         System.out.println("Host Name : " + host.getName());
@@ -95,7 +92,7 @@ public class ExportFromESXi
 		if (findvm == null ) {
 			System.out.println("No such VM");;
 		}	
-		else{
+		/*else{
 			VMIPADDRESS = findvm.getGuest().getIpAddress();
 			System.out.println(VMIPADDRESS);
 			command.runCommand("apt-get install python-pip -y", VMIPADDRESS);
@@ -103,13 +100,14 @@ public class ExportFromESXi
 			command.runCommand("vmware-uninstall-tools.pl",VMIPADDRESS);
 			Task poweroffTask = findvm.powerOffVM_Task();
 			poweroffTask.waitForTask();
-			if(poweroffTask.equals(Task.SUCCESS)){
-				exportOvf(findvm,targetDir,si,hostip);
-		}
+			if(poweroffTask.equals(Task.SUCCESS)){*/
+			vmdkfile=exportOvf(findvm,targetDir,si,hostip);
+		//}
+				return vmdkfile;
 
-        si.getServerConnection().logout();
+       // si.getServerConnection().logout();
       }
-      }
+	//}
      
     private static VirtualMachine findVM(String vmName, ServiceInstance si) throws InvalidProperty, RuntimeFault, RemoteException{
 		VirtualMachine findvm;
@@ -119,7 +117,7 @@ public class ExportFromESXi
 		return findvm;
     }
     
- 	private static void exportOvf(VirtualMachine VM, String targetDir, ServiceInstance si, String hostip) throws IOException{
+ 	private static List<String> exportOvf(VirtualMachine VM, String targetDir, ServiceInstance si, String hostip) throws IOException{
         HttpNfcLease hnLease = null;
         hnLease = VM.exportVm();
  
@@ -136,7 +134,7 @@ public class ExportFromESXi
           if(hls == HttpNfcLeaseState.error)
           {
             si.getServerConnection().logout();
-            return;
+            return vmdklist;
           }
         }
  
@@ -166,6 +164,10 @@ public class ExportFromESXi
             String diskFileName = deviceUrlStr.substring(deviceUrlStr.lastIndexOf("/") + 1);
             String diskUrlStr = deviceUrlStr.replace("*", hostip);
             String diskLocalPath = targetDir + diskFileName;
+            if(deviceUrlStr.substring(deviceUrlStr.lastIndexOf("/") + 1).equals("vmdk"))
+            {
+            	vmdklist.add(diskLocalPath);
+            }
             System.out.println("File Name: " + diskFileName);
             System.out.println("VMDK URL: " + diskUrlStr);
             String cookie = si.getServerConnection().getVimService().getWsc().getCookie();
@@ -194,7 +196,7 @@ public class ExportFromESXi
         leaseProgUpdater.interrupt();
         hnLease.httpNfcLeaseProgress(100);
         hnLease.httpNfcLeaseComplete();
- 
+        return vmdklist;
  	}
  
     private static void printHttpNfcLeaseInfo(HttpNfcLeaseInfo info)
