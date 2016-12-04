@@ -68,20 +68,12 @@ http://www.doublecloud.org/2010/04/how-to-import-and-export-ovf-packages/
 public class ExportFromESXi
 {
    public static LeaseProgressUpdater leaseProgUpdater;
-	private static String ESXURL;
-	private static String ESXUSERNAME;
-	private static String ESXPASSWORD;
 	private static String VMIPADDRESS;
-	private static List<String> vmdklist = new ArrayList<String>();
      
-	public static List<String> exportfromesxi() throws IOException
+	public static List<String> exportfromesxi(ServiceInstance si,String hostip, String targetDir,String vmName) throws IOException
       {
     	
-        ServiceInstance si = new ServiceInstance(new URL("https://192.168.170.135/sdk"), "root", "yuanyuan", true);
-        String vmName = "server";
-        String hostip = "192.168.170.135";
-        String targetDir = "/Users/Dora/Desktop/";
-        List<String> vmdkfile;
+        List<String> vmdkfile = new ArrayList<String>();
         HostSystem host = (HostSystem) si.getSearchIndex().findByIp(null, hostip, false);
  
         System.out.println("Host Name : " + host.getName());
@@ -118,9 +110,10 @@ public class ExportFromESXi
     }
     
  	private static List<String> exportOvf(VirtualMachine VM, String targetDir, ServiceInstance si, String hostip) throws IOException{
-        HttpNfcLease hnLease = null;
+        
+ 		HttpNfcLease hnLease = null;
         hnLease = VM.exportVm();
- 
+        List<String> vmdklist = new ArrayList<String>();
  
         // Wait until the HttpNfcLeaseState is ready
         HttpNfcLeaseState hls;
@@ -134,6 +127,7 @@ public class ExportFromESXi
           if(hls == HttpNfcLeaseState.error)
           {
             si.getServerConnection().logout();
+            vmdklist.add("Error: HTTPError");
             return vmdklist;
           }
         }
@@ -162,9 +156,10 @@ public class ExportFromESXi
             String deviceId = deviceUrls[i].getKey();
             String deviceUrlStr = deviceUrls[i].getUrl();
             String diskFileName = deviceUrlStr.substring(deviceUrlStr.lastIndexOf("/") + 1);
+            System.out.println(diskFileName);
             String diskUrlStr = deviceUrlStr.replace("*", hostip);
             String diskLocalPath = targetDir + diskFileName;
-            if(deviceUrlStr.substring(deviceUrlStr.lastIndexOf("/") + 1).equals("vmdk"))
+            if(diskFileName.substring(diskFileName.lastIndexOf(".") + 1).equals("vmdk"))
             {
             	vmdklist.add(diskLocalPath);
             }

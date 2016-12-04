@@ -15,7 +15,9 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.internal.StaticCredentialsProvider;
+import com.amazonaws.event.ProgressEvent;
+import com.amazonaws.event.ProgressListener;
+//import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.model.ContainerFormat;
@@ -43,33 +45,16 @@ import javafx.beans.property.Property;
 import com.amazonaws.services.ec2.model.*;
 
 public class EC2_Import {
-	private static String S3_bucket ="bucketformigrateaws";
 	
-	private static ContainerFormat ExportContainerFormat = ContainerFormat.Ova ;//com.amazonaws.services.ec2.model.ContainerFormat.Ova is only value for container format
-	private static DiskImageFormat exportDiskFormat = DiskImageFormat.VMDK;
 	
-	private static TransferManager tx;
-	private static String bucketName;
-	private static List<String> vmdkfile = new ArrayList<String>();
 	
-	public static void main(String[] args) throws Exception {
+	public static String importToEc2(List<String> vmdkfile,AmazonS3 s3, AmazonEC2Client amazonEC2Client,String bucketName)
+	{
 		
-		AWSCredentialsProvider provider;
-		provider = awsCredential.provider();
-		bucketName = "bucketformation222";
-		Region region=Region.getRegion(Regions.US_WEST_2);
-		AmazonEC2Client amazonEC2Client = new AmazonEC2Client(provider);
-//		amazonEC2Client.setEndpoint("ec2.us-west-2.amazonaws.com");
-		amazonEC2Client.setRegion(region);
-        AmazonS3 s3 = new AmazonS3Client(provider);
-				
 		try {	    
-			vmdkfile=ExportFromESXi.exportfromesxi();
-        	//vmdkfile.add("/Users/Dora/Desktop/disk-1.vmdk");
 			for(int i=0;i<vmdkfile.size();i++){
 				S3.uploadtoS3(s3,vmdkfile.get(i),bucketName);	
 			}
-	                CreateInstanceExportTaskRequest exportReq = new  CreateInstanceExportTaskRequest();
 	                ImportImageRequest iir = new ImportImageRequest();
 	                ImageDiskContainer idc = new ImageDiskContainer();
 	                Collection<ImageDiskContainer> diskContainers = new ArrayList<ImageDiskContainer>();
@@ -84,20 +69,27 @@ public class EC2_Import {
 		                userbucket.setS3Key(key);
 		                idc.withUserBucket(userbucket);
 		                diskContainers.add(idc);
-	    			}	                                
+	    			}	   
+	    			
 	                iir.setDiskContainers(diskContainers);
-	                System.out.println("EC2 Import image");
 	                ImportImageResult result = amazonEC2Client.importImage(iir);
-	                System.out.println(result.getProgress());
-	                	                
+	                System.out.println("EC2 Import image");
+	                iir.setGeneralProgressListener(new ProgressListener() {
+						@Override
+						public void progressChanged(ProgressEvent progressEvent) {
+							System.out.println("Imported bytes: " + 
+									progressEvent.getBytesTransferred());
+						}
+						});
+	                
+	                
+	                System.out.println(result.getProgress());	                	                
 	                String importid= result.getImportTaskId();
 	                System.out.println(importid);
 	                System.out.println(result.getProgress());
 	                System.out.println(result.getStatus());
-	                DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
-	                imagerequest.withImportTaskIds(importid);
-	                return;
-	            
+
+	                return importid;	            
 
 	         } catch (AmazonServiceException ase) {
 	            System.out.println("Caught an AmazonServiceException, which " +
@@ -109,18 +101,28 @@ public class EC2_Import {
 	            System.out.println("AWS Error Code:   " + ase.getErrorCode());
 	            System.out.println("Error Type:       " + ase.getErrorType());
 	            System.out.println("Request ID:       " + ase.getRequestId());
+	            return "error";
 	        } catch (AmazonClientException ace) {
-	            System.out.println("Caught an AmazonClientException, which " +
+	            return ("Error: Caught an AmazonClientException, which " +
 	            		"means the client encountered " +
 	                    "an internal error while trying to " +
 	                    "communicate with S3, " +
-	                    "such as not being able to access the network.");
-	            System.out.println("Error Message: " + ace.getMessage());
-	        }/*catch (IOException e) {
+	                    "such as not being able to access the network."+" Error Message: " + ace.getMessage());
+	        } catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} */
+				return ("Error: "+e);
+			}
 		
+	}
+	
+	public static void checkimportstatus(String importid, AWSCredentialsProvider provider) {
+		
+        DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
+        imagerequest.withImportTaskIds(importid);
+        imagerequest.setRequestCredentialsProvider(provider);
+        imagerequest.getGeneralProgressListener();
+        
 	}
 
 	

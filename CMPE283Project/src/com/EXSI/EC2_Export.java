@@ -1,6 +1,10 @@
 package com.EXSI;
 
 import com.amazonaws.services.ec2.*;
+
+import java.io.IOException;
+import java.sql.Timestamp;
+
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
@@ -8,54 +12,57 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.event.ProgressEvent;
+import com.amazonaws.event.ProgressListener;
 import com.amazonaws.internal.StaticCredentialsProvider;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.RegionUtils;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.model.ContainerFormat;
 import com.amazonaws.services.ec2.model.CreateInstanceExportTaskRequest;
+import com.amazonaws.services.ec2.model.CreateInstanceExportTaskResult;
 import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
 import com.amazonaws.services.ec2.model.DiskImageFormat;
 import com.amazonaws.services.ec2.model.ExportEnvironment;
 import com.amazonaws.services.ec2.model.ExportToS3TaskSpecification;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 
 public class EC2_Export {
-	private static String S3_bucket ="bucketformigrateaws";
+
 	private static ContainerFormat ExportContainerFormat = ContainerFormat.Ova ;//com.amazonaws.services.ec2.model.ContainerFormat.Ova is only value for container format
 	private static DiskImageFormat exportDiskFormat = DiskImageFormat.VMDK;
 	
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		String AccessKeyID = "AKIAJJLGXTB3JUIDYNWA";
-		String SecretAccessKey = "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";
-		
-	    AWSCredentialsProvider provider;
-	    if ( AccessKeyID != null && SecretAccessKey != null ) {
-	        AWSCredentials credentials = new BasicAWSCredentials( AccessKeyID, SecretAccessKey );
-	        provider = new StaticCredentialsProvider( credentials );
-	    }
-	    else {
-	        provider = new DefaultAWSCredentialsProviderChain();
-	    }
-
-		
-//		AmazonEC2 amazonEC2Client = AmazonEC2ClientBuilder.standard().withCredentials(new AWSStaticCredentialsProvider(credentials)).withRegion("us-west-2").build();
-		
-		AmazonEC2Client amazonEC2Client = new AmazonEC2Client(provider);
-		amazonEC2Client.setEndpoint("ec2.us-west-2.amazonaws.com");
-		
+	public static String ec2Export(AmazonEC2Client amazonEC2Client, AmazonS3 s3client,String regionname,String bucketName, String instanceID) throws IOException {		
 		try{
-			System.out.println("start to export ec2");
-			
-			//http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/CreateInstanceExportTaskRequest.htm
-			 CreateInstanceExportTaskRequest exportReq = new  CreateInstanceExportTaskRequest();
-			 exportReq.setDescription("test export from java sdk");
-			 exportReq.setInstanceId("i-0bd7339e11994c9da");
-			 exportReq.setTargetEnvironment(ExportEnvironment.Vmware);
-			 exportReq.setExportToS3Task(new ExportToS3TaskSpecification()
-					 	.withS3Bucket(S3_bucket).withContainerFormat(ExportContainerFormat).withDiskImageFormat(exportDiskFormat));
-			 //http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/ExportToS3TaskSpecification.html
-			 
-			 amazonEC2Client.createInstanceExportTask(exportReq);
-			 
+			String prefixName = null;
+
+			Region region=RegionUtils.getRegion(regionname);
+			Boolean Bucketresult = S3.createBucket(s3client, bucketName, region);
+			if(Bucketresult){
+				Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+				prefixName = "ExportImage"+timestamp;
+				//S3.createFolder(S3_bucket, folderName, s3client);
+		
+					System.out.println("start to export ec2");					
+					
+					//http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/CreateInstanceExportTaskRequest.htm
+					 CreateInstanceExportTaskRequest exportReq = new  CreateInstanceExportTaskRequest();					 
+					 exportReq.setDescription("test export from java sdk");
+					 exportReq.setInstanceId(instanceID);
+					 exportReq.setTargetEnvironment(ExportEnvironment.Vmware);
+					 exportReq.setExportToS3Task(new ExportToS3TaskSpecification()
+							 	.withS3Bucket(bucketName).withS3Prefix(prefixName).withContainerFormat(ExportContainerFormat).withDiskImageFormat(exportDiskFormat));
+					 //http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/ExportToS3TaskSpecification.html
+					 exportReq.setGeneralProgressListener(new ProgressListener() {
+						@Override
+						public void progressChanged(ProgressEvent progressEvent) {
+							System.out.println("Exported bytes: " + 
+									progressEvent.getBytesTransferred());
+						}
+						});										 
+			}
+			 return prefixName;
 		}catch(AmazonServiceException ase){
 			System.out.println("Caught an AmazonServiceException, which " +
             		"means your request made it " +
@@ -66,6 +73,7 @@ public class EC2_Export {
             System.out.println("AWS Error Code:   " + ase.getErrorCode());
             System.out.println("Error Type:       " + ase.getErrorType());
             System.out.println("Request ID:       " + ase.getRequestId());
+            return "Error";
 			
 		}catch(AmazonClientException ace) {
             System.out.println("Caught an AmazonClientException, which " +
@@ -74,8 +82,7 @@ public class EC2_Export {
                     "communicate with EC2, " +
                     "such as not being able to access the network.");
             System.out.println("Error Message: " + ace.getMessage());
-        }finally{
-        	System.out.println("check S3 bucket");
+            return "Error";
         }
 	}
 

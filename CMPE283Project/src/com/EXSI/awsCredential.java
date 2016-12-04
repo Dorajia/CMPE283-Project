@@ -37,6 +37,19 @@ public class awsCredential {
 	        provider = new DefaultAWSCredentialsProviderChain();
 	    }
 		return provider;
-		}		
+		}	
+	
+	/*public static AWSCredentialsProvider provider(String AccessKeyID, String  SecretAccessKey) throws IOException{
+	    
+		AWSCredentialsProvider provider;
+	    if ( AccessKeyID != null && SecretAccessKey != null ) {
+	        AWSCredentials credentials = new BasicAWSCredentials( AccessKeyID, SecretAccessKey );
+	        provider = new StaticCredentialsProvider( credentials );
+	    }
+	    else {
+	        provider = new DefaultAWSCredentialsProviderChain();
+	    }
+		return provider;
+		}	*/
 
 }
