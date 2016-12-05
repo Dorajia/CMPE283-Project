@@ -26,7 +26,7 @@ public class AWSEc2Info {
 	}
 	
 	public static List<String> GetInstance(String regionname, AmazonEC2Client amazonEC2Client){
-		List<String> instanceinfo = new ArrayList<String>();;
+		List<String> instanceinfo = new ArrayList<String>();
 		try{
 
 			amazonEC2Client.setRegion(RegionUtils.getRegion(regionname));  
@@ -49,6 +49,7 @@ public class AWSEc2Info {
 		}
 		
 	}
+	
 
 
 }

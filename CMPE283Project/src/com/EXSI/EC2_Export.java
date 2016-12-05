@@ -18,13 +18,22 @@ import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.ec2.model.CancelExportTaskRequest;
+import com.amazonaws.services.ec2.model.CancelExportTaskResult;
+import com.amazonaws.services.ec2.model.CancelImportTaskRequest;
+import com.amazonaws.services.ec2.model.CancelImportTaskResult;
 import com.amazonaws.services.ec2.model.ContainerFormat;
 import com.amazonaws.services.ec2.model.CreateInstanceExportTaskRequest;
 import com.amazonaws.services.ec2.model.CreateInstanceExportTaskResult;
 import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
+import com.amazonaws.services.ec2.model.DescribeExportTasksRequest;
+import com.amazonaws.services.ec2.model.DescribeExportTasksResult;
+import com.amazonaws.services.ec2.model.DescribeImportImageTasksRequest;
+import com.amazonaws.services.ec2.model.DescribeImportImageTasksResult;
 import com.amazonaws.services.ec2.model.DiskImageFormat;
 import com.amazonaws.services.ec2.model.ExportEnvironment;
 import com.amazonaws.services.ec2.model.ExportToS3TaskSpecification;
+import com.amazonaws.services.ec2.model.ImportImageResult;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 
@@ -35,13 +44,12 @@ public class EC2_Export {
 	
 	public static String ec2Export(AmazonEC2Client amazonEC2Client, AmazonS3 s3client,String regionname,String bucketName, String instanceID) throws IOException {		
 		try{
-			String prefixName = null;
+			String exportname = null;
 
 			Region region=RegionUtils.getRegion(regionname);
 			Boolean Bucketresult = S3.createBucket(s3client, bucketName, region);
 			if(Bucketresult){
-				Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-				prefixName = "ExportImage"+timestamp;
+		
 				//S3.createFolder(S3_bucket, folderName, s3client);
 		
 					System.out.println("start to export ec2");					
@@ -52,7 +60,8 @@ public class EC2_Export {
 					 exportReq.setInstanceId(instanceID);
 					 exportReq.setTargetEnvironment(ExportEnvironment.Vmware);
 					 exportReq.setExportToS3Task(new ExportToS3TaskSpecification()
-							 	.withS3Bucket(bucketName).withS3Prefix(prefixName).withContainerFormat(ExportContainerFormat).withDiskImageFormat(exportDiskFormat));
+							 	.withS3Bucket(bucketName).withContainerFormat(ExportContainerFormat).withDiskImageFormat(exportDiskFormat));
+					 
 					 //http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/ExportToS3TaskSpecification.html
 					 exportReq.setGeneralProgressListener(new ProgressListener() {
 						@Override
@@ -60,9 +69,14 @@ public class EC2_Export {
 							System.out.println("Exported bytes: " + 
 									progressEvent.getBytesTransferred());
 						}
-						});										 
+						});	
+					  
+					  CreateInstanceExportTaskResult result = amazonEC2Client.createInstanceExportTask(exportReq);
+					  System.out.println(result.getExportTask().getState());
+					  exportname = result.getExportTask().getExportTaskId();
+					  
 			}
-			 return prefixName;
+			 return exportname;
 		}catch(AmazonServiceException ase){
 			System.out.println("Caught an AmazonServiceException, which " +
             		"means your request made it " +
@@ -86,5 +100,33 @@ public class EC2_Export {
         }
 	}
 
+	public static void checkexportstatus(String exportid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+        DescribeExportTasksRequest exportrequest = new DescribeExportTasksRequest();
+        exportrequest.withExportTaskIds(exportid);
+        exportrequest.setRequestCredentialsProvider(provider);
+        DescribeExportTasksResult exportresult=amazonEC2Client.describeExportTasks(exportrequest);
+               
+        System.out.println(exportresult);       
+	}
+	
+	public static void checkexporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+        DescribeExportTasksRequest exportrequest = new DescribeExportTasksRequest();
+        exportrequest.setRequestCredentialsProvider(provider);
+        DescribeExportTasksResult exportresult=amazonEC2Client.describeExportTasks(exportrequest);
+               
+        System.out.println(exportresult);       
+	}
+	
+	
+	public static void cancelexporttask(String exportid,AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) 
+	{
+
+		CancelExportTaskRequest cancelexport = new CancelExportTaskRequest();
+		cancelexport.withExportTaskId(exportid);
+		CancelExportTaskResult cancelresult=amazonEC2Client.cancelExportTask(cancelexport);
+		 System.out.println(cancelresult);
+		
+	}
+	
 }
 

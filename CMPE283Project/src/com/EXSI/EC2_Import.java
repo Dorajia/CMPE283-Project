@@ -20,17 +20,6 @@ import com.amazonaws.event.ProgressListener;
 //import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.ec2.model.ContainerFormat;
-import com.amazonaws.services.ec2.model.CreateInstanceExportTaskRequest;
-import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
-import com.amazonaws.services.ec2.model.DiskImageFormat;
-import com.amazonaws.services.ec2.model.ExportEnvironment;
-import com.amazonaws.services.ec2.model.ExportToS3TaskSpecification;
-import com.amazonaws.services.ec2.model.ImageDiskContainer;
-import com.amazonaws.services.ec2.model.ImportImageRequest;
-import com.amazonaws.services.ec2.model.ImportImageResult;
-import com.amazonaws.services.ec2.model.ImportImageTask;
-import com.amazonaws.services.ec2.model.UserBucket;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CreateBucketRequest;
@@ -44,9 +33,7 @@ import javafx.beans.property.Property;
 
 import com.amazonaws.services.ec2.model.*;
 
-public class EC2_Import {
-	
-	
+public class EC2_Import {	
 	
 	public static String importToEc2(List<String> vmdkfile,AmazonS3 s3, AmazonEC2Client amazonEC2Client,String bucketName)
 	{
@@ -72,7 +59,9 @@ public class EC2_Import {
 	    			}	   
 	    			
 	                iir.setDiskContainers(diskContainers);
+	                
 	                ImportImageResult result = amazonEC2Client.importImage(iir);
+
 	                System.out.println("EC2 Import image");
 	                iir.setGeneralProgressListener(new ProgressListener() {
 						@Override
@@ -88,7 +77,6 @@ public class EC2_Import {
 	                System.out.println(importid);
 	                System.out.println(result.getProgress());
 	                System.out.println(result.getStatus());
-
 	                return importid;	            
 
 	         } catch (AmazonServiceException ase) {
@@ -116,14 +104,49 @@ public class EC2_Import {
 		
 	}
 	
-	public static void checkimportstatus(String importid, AWSCredentialsProvider provider) {
-		
+	public static void checkimportstatus(String importid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
         DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
         imagerequest.withImportTaskIds(importid);
         imagerequest.setRequestCredentialsProvider(provider);
-        imagerequest.getGeneralProgressListener();
+        DescribeImportImageTasksResult importresult=amazonEC2Client.describeImportImageTasks(imagerequest);
+               
+        System.out.println(importresult);
+        
+        imagerequest.setGeneralProgressListener(new ProgressListener() {
+			@Override
+			public void progressChanged(ProgressEvent progressEvent) {
+				System.out.println("Imported bytes: " + 
+						progressEvent.getBytesTransferred());
+			}
+			});
+        
+	}
+	
+	public static void checkimporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+        DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
+        imagerequest.setRequestCredentialsProvider(provider);
+        DescribeImportImageTasksResult importresult=amazonEC2Client.describeImportImageTasks(imagerequest);
+               
+        System.out.println(importresult.toString());
+        
+        
+        imagerequest.setGeneralProgressListener(new ProgressListener() {
+			@Override
+			public void progressChanged(ProgressEvent progressEvent) {
+				System.out.println("Imported bytes: " + 
+						progressEvent.getBytesTransferred());
+			}
+			});
         
 	}
 
-	
+	public static void cancelimporttask(String importid,AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) 
+	{
+
+		CancelImportTaskRequest cancelimport = new CancelImportTaskRequest();
+		cancelimport.withImportTaskId(importid);
+		CancelImportTaskResult cancelresult=amazonEC2Client.cancelImportTask(cancelimport);
+		System.out.println(cancelresult);
+		
+	}
 }
