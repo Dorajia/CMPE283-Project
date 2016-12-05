@@ -56,7 +56,6 @@ public class S3 {
 	        	// Note that CreateBucketRequest does not specify region. So bucket is 
 	        	// created in the region specified in the client.
 	        	String regionname = region.getName();
-	        	System.out.println(regionname);
 	        	CreateBucketRequest bucketrequest = new CreateBucketRequest(bucketname,regionname);
 
 	        	s3client.createBucket(bucketrequest);

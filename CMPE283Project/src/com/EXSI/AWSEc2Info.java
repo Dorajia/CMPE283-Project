@@ -3,8 +3,11 @@ package com.EXSI;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.amazonaws.regions.Region;
 import com.amazonaws.regions.RegionUtils;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2Client;
@@ -25,27 +28,34 @@ public class AWSEc2Info {
 		return regionlist;
 	}
 	
-	public static List<String> GetInstance(String regionname, AmazonEC2Client amazonEC2Client){
-		List<String> instanceinfo = new ArrayList<String>();
+	public static List<List<String>> GetInstance(Region region, AmazonEC2Client amazonEC2Client){
+		List<List<String>>  instanceinfolist = new ArrayList<List<String>> ();
 		try{
 
-			amazonEC2Client.setRegion(RegionUtils.getRegion(regionname));  
+			amazonEC2Client.setRegion(region);  
 
 		     DescribeInstancesResult describeInstances = amazonEC2Client.describeInstances();
 		     List<Reservation> reservations = describeInstances.getReservations();
 		        for (Reservation reservation : reservations) {
 		            List<Instance> instances = reservation.getInstances();
-		             for (Instance instance : instances) {
-		            	 instanceinfo.add(instance.getInstanceId());
-		            	 instanceinfo.add(instance.getInstanceType());
-		            	 instanceinfo.add(instance.getPublicIpAddress());		            
+		             for (int i =0;i<instances.size();i++) {
+		            	 List<String> instance = new ArrayList<String>();
+		            	 instance.add(instances.get(i).getInstanceId());
+		            	 instance.add(instances.get(i).getArchitecture());
+		            	 instance.add(instances.get(i).getImageId());
+		            	 instance.add(instances.get(i).getInstanceType());
+		            	 instance.add(instances.get(i).getKeyName());
+		            	 instance.add(instances.get(i).getPublicIpAddress());
+		            	 instance.add(instances.get(i).getLaunchTime().toString());
+		            	 instance.add(instances.get(i).getState().getName());
+		            	 instanceinfolist.add(instance);
+		            	 
 		             }
 		        }
-		     return instanceinfo;
+		     return instanceinfolist;
 		}catch (Exception e)
 		{
-			instanceinfo.add("Incorrect credential");
-			return instanceinfo;
+			return instanceinfolist;
 		}
 		
 	}

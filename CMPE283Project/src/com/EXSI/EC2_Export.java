@@ -42,11 +42,10 @@ public class EC2_Export {
 	private static ContainerFormat ExportContainerFormat = ContainerFormat.Ova ;//com.amazonaws.services.ec2.model.ContainerFormat.Ova is only value for container format
 	private static DiskImageFormat exportDiskFormat = DiskImageFormat.VMDK;
 	
-	public static String ec2Export(AmazonEC2Client amazonEC2Client, AmazonS3 s3client,String regionname,String bucketName, String instanceID) throws IOException {		
+	public static String ec2Export(AmazonEC2Client amazonEC2Client, AmazonS3 s3client,Region region,String bucketName, String instanceID) throws IOException {		
 		try{
 			String exportname = null;
 
-			Region region=RegionUtils.getRegion(regionname);
 			Boolean Bucketresult = S3.createBucket(s3client, bucketName, region);
 			if(Bucketresult){
 		
@@ -63,13 +62,13 @@ public class EC2_Export {
 							 	.withS3Bucket(bucketName).withContainerFormat(ExportContainerFormat).withDiskImageFormat(exportDiskFormat));
 					 
 					 //http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/services/ec2/model/ExportToS3TaskSpecification.html
-					 exportReq.setGeneralProgressListener(new ProgressListener() {
+/*					 exportReq.setGeneralProgressListener(new ProgressListener() {
 						@Override
 						public void progressChanged(ProgressEvent progressEvent) {
 							System.out.println("Exported bytes: " + 
 									progressEvent.getBytesTransferred());
 						}
-						});	
+						});	*/
 					  
 					  CreateInstanceExportTaskResult result = amazonEC2Client.createInstanceExportTask(exportReq);
 					  System.out.println(result.getExportTask().getState());
@@ -100,31 +99,34 @@ public class EC2_Export {
         }
 	}
 
-	public static void checkexportstatus(String exportid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+	public static String checkexportstatus(String exportid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
         DescribeExportTasksRequest exportrequest = new DescribeExportTasksRequest();
         exportrequest.withExportTaskIds(exportid);
         exportrequest.setRequestCredentialsProvider(provider);
         DescribeExportTasksResult exportresult=amazonEC2Client.describeExportTasks(exportrequest);
                
-        System.out.println(exportresult);       
+        System.out.println(exportresult); 
+        return exportresult.toString();
 	}
 	
-	public static void checkexporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+	public static String checkexporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
         DescribeExportTasksRequest exportrequest = new DescribeExportTasksRequest();
         exportrequest.setRequestCredentialsProvider(provider);
         DescribeExportTasksResult exportresult=amazonEC2Client.describeExportTasks(exportrequest);
                
-        System.out.println(exportresult);       
+        System.out.println(exportresult); 
+        return exportresult.toString();
 	}
 	
 	
-	public static void cancelexporttask(String exportid,AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) 
+	public static String cancelexporttask(String exportid,AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) 
 	{
 
 		CancelExportTaskRequest cancelexport = new CancelExportTaskRequest();
 		cancelexport.withExportTaskId(exportid);
 		CancelExportTaskResult cancelresult=amazonEC2Client.cancelExportTask(cancelexport);
 		 System.out.println(cancelresult);
+		 return cancelresult.toString();
 		
 	}
 	

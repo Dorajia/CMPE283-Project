@@ -104,7 +104,7 @@ public class EC2_Import {
 		
 	}
 	
-	public static void checkimportstatus(String importid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+	public static String checkimportstatus(String importid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
         DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
         imagerequest.withImportTaskIds(importid);
         imagerequest.setRequestCredentialsProvider(provider);
@@ -112,17 +112,11 @@ public class EC2_Import {
                
         System.out.println(importresult);
         
-        imagerequest.setGeneralProgressListener(new ProgressListener() {
-			@Override
-			public void progressChanged(ProgressEvent progressEvent) {
-				System.out.println("Imported bytes: " + 
-						progressEvent.getBytesTransferred());
-			}
-			});
+        return importresult.toString();
         
 	}
 	
-	public static void checkimporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+	public static String checkimporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
         DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
         imagerequest.setRequestCredentialsProvider(provider);
         DescribeImportImageTasksResult importresult=amazonEC2Client.describeImportImageTasks(imagerequest);
@@ -130,23 +124,24 @@ public class EC2_Import {
         System.out.println(importresult.toString());
         
         
-        imagerequest.setGeneralProgressListener(new ProgressListener() {
+ /*       imagerequest.setGeneralProgressListener(new ProgressListener() {
 			@Override
 			public void progressChanged(ProgressEvent progressEvent) {
 				System.out.println("Imported bytes: " + 
 						progressEvent.getBytesTransferred());
 			}
-			});
+			});*/
+        return importresult.toString();
         
 	}
 
-	public static void cancelimporttask(String importid,AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) 
+	public static String cancelimporttask(String importid,AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) 
 	{
 
 		CancelImportTaskRequest cancelimport = new CancelImportTaskRequest();
 		cancelimport.withImportTaskId(importid);
 		CancelImportTaskResult cancelresult=amazonEC2Client.cancelImportTask(cancelimport);
 		System.out.println(cancelresult);
-		
+		return cancelresult.toString();
 	}
 }
