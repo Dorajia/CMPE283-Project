@@ -186,9 +186,10 @@ public class S3 {
 		}
 	}
 	
-	public static void downloadfromS3(AmazonS3 s3client, String filePath, String bucketName,String key) throws InterruptedException{
+	public static void downloadfromS3(AmazonS3 s3client, String filePath, String bucketName,String exportid) throws InterruptedException{
 		   try{ 	
 			   System.out.println("Downloading an object");
+			   String key = exportid+".ova";
 	            S3Object s3object = s3client.getObject(new GetObjectRequest(
 	            		bucketName, key));
 	            System.out.println("Content-Type: "  + 

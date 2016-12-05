@@ -28,7 +28,7 @@ public class test {
 		amazonEC2Client.setRegion(region);
         AmazonS3 s3client = new AmazonS3Client(provider);
         //Folder path to store the vmdk and ova file
-/*       String targetDir = "/Users/Dora/Desktop/";
+       String targetDir = "/Users/Dora/Desktop/";
         
         //EC2 import process 
        ServiceInstance si = new ServiceInstance(new URL("https://192.168.170.135/sdk"), "root", "yuanyuan", true);
@@ -50,15 +50,15 @@ public class test {
         String exportname = EC2_Export.ec2Export(amazonEC2Client, s3client,region.getName(), bucketName, instanceid); 
         
         //check import status with import id
-        EC2_Import.checkimportstatus(importid, provider,amazonEC2Client);*/
+        EC2_Import.checkimportstatus(importid, provider,amazonEC2Client);
         //check import history
         EC2_Import.checkimporthistory(provider,amazonEC2Client);
         //check export status with export id
-//        EC2_Export.checkexportstatus(exportname, provider,amazonEC2Client);
+        EC2_Export.checkexportstatus(exportname, provider,amazonEC2Client);
         //check export history
         EC2_Export.checkexporthistory(provider,amazonEC2Client);
         //download exported ova
-//        String filepath = targetDir+exportname;
-//        S3.downloadfromS3(s3client, filepath, bucketName,exportname);
+        String filepath = targetDir+exportname;
+        S3.downloadfromS3(s3client, filepath, bucketName,exportname);
 	}
 }
