@@ -56,7 +56,6 @@ public class S3 {
 	        	// Note that CreateBucketRequest does not specify region. So bucket is 
 	        	// created in the region specified in the client.
 	        	String regionname = region.getName();
-	        	System.out.println(regionname);
 	        	CreateBucketRequest bucketrequest = new CreateBucketRequest(bucketname,regionname);
 
 	        	s3client.createBucket(bucketrequest);
@@ -186,9 +185,10 @@ public class S3 {
 		}
 	}
 	
-	public static void downloadfromS3(AmazonS3 s3client, String filePath, String bucketName,String key) throws InterruptedException{
+	public static void downloadfromS3(AmazonS3 s3client, String filePath, String bucketName,String exportid) throws InterruptedException{
 		   try{ 	
 			   System.out.println("Downloading an object");
+			   String key = exportid+".ova";
 	            S3Object s3object = s3client.getObject(new GetObjectRequest(
 	            		bucketName, key));
 	            System.out.println("Content-Type: "  + 
