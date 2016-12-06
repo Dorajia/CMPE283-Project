@@ -69,12 +69,30 @@ public class ExportFromESXi
 {
    public static LeaseProgressUpdater leaseProgUpdater;
 	private static String VMIPADDRESS;
-     
+    
+	static HostSystem getHost(ServiceInstance si, String vm) throws InvalidProperty, RuntimeFault, RemoteException{
+		Folder rootFolder = si.getRootFolder();
+		ManagedEntity[] MHosts = new InventoryNavigator(rootFolder).searchManagedEntities("HostSystem");
+		for(ManagedEntity mhost: MHosts){
+			ManagedEntity thisVM = new InventoryNavigator(mhost).searchManagedEntity("VirtualMachine", vm);
+			if(thisVM != null){
+				HostSystem host = (HostSystem) mhost;
+				return host;
+				
+			}
+		}
+		return null;
+	
+	}
+	
 	public static List<String> exportfromesxi(ServiceInstance si,String hostip, String targetDir,String vmName) throws IOException
       {
     	
         List<String> vmdkfile = new ArrayList<String>();
         HostSystem host = (HostSystem) si.getSearchIndex().findByIp(null, hostip, false);
+        if(host == null){
+        	host = getHost(si,vmName);
+        }
  
         System.out.println("Host Name : " + host.getName());
         System.out.println("Network : " + host.getNetworks()[0].getName());
@@ -93,6 +111,7 @@ public class ExportFromESXi
 			Task poweroffTask = findvm.powerOffVM_Task();
 			poweroffTask.waitForTask();
 			if(poweroffTask.equals(Task.SUCCESS)){*/
+		
 			vmdkfile=exportOvf(findvm,targetDir,si,hostip);
 		//}
 				return vmdkfile;

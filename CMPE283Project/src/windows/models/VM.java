@@ -59,6 +59,11 @@ public class VM {
 		Memory =new SimpleIntegerProperty(vm.getSummary().config.memorySizeMB);
 		System.out.println(Memory);
 		ToolStatus = new SimpleStringProperty(vm.getSummary().guest.toolsStatus.name());
-		System.out.print(ToolStatus);
+		System.out.println(ToolStatus);
+		System.out.println(vm.getGuest().ipAddress);
+		System.out.println(vm.getGuest().hostName);
+		System.out.println(vm.getGuest().getGuestId());
+		System.out.println(vm.getServerConnection().getUrl());
+		System.out.println(vm.getServerConnection().getUsername());
 	}
 }

@@ -75,7 +75,8 @@ public class VSphere_credentials {
 			System.out.println(VMs.length);
 			for(ManagedEntity VM : VMs){
 				System.out.println(VM.getName());
-				vms.add(new VM((VirtualMachine)VM));
+				if(!((VirtualMachine)VM).getConfig().template)
+					vms.add(new VM((VirtualMachine)VM));
 			}
 			return vms;
 		} catch (RemoteException e) {

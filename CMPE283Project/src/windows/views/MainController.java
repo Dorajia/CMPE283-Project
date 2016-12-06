@@ -1,9 +1,11 @@
 package windows.views;
 
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
-import com.EXSI.AWSEc2Info;
+import com.EXSI.*;
 import com.amazonaws.regions.Regions;
 
 import javafx.fxml.FXML;
@@ -19,6 +21,8 @@ import javafx.scene.layout.Pane;
 import windows.models.Aws_credentials;
 import windows.models.VM;
 import windows.models.VSphere_credentials;
+
+
 
 public class MainController extends ViewController{
 
@@ -109,7 +113,15 @@ public class MainController extends ViewController{
     
     @FXML
     private void startMigration(){
-    	
+    	if(Instance_tree_view.getSelectionModel().getSelectedItem().getParent().equals(vmRoot)){
+    		List<String> vmdkfile = new ArrayList<String>();
+    		try {
+				vmdkfile = ExportFromESXi.exportfromesxi(VSphere_credentials.defaultCred.getSI(), VSphere_credentials.defaultCred.get_ip(), "./", Instance_tree_view.getSelectionModel().getSelectedItem().getValue());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
     }
     
     @FXML
