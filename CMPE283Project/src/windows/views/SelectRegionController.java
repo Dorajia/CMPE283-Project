@@ -23,11 +23,14 @@ public class SelectRegionController extends ViewController{
     	System.out.println("init");
     	Aws_credentials.DefaultCred.fetchRegions();
     	RegionChoiceDD.setItems(Aws_credentials.DefaultCred.getRegions());
+    	RegionChoiceDD.setValue(RegionChoiceDD.getItems().get(0));
 
     }
     @FXML
     void selectRegion(MouseEvent event) {
-    	
+    	Aws_credentials.DefaultCred.set_region(RegionChoiceDD.getValue());
+    	System.out.println(RegionChoiceDD.getValue());
+    	mainApp.loadNewStage("./views/Main.fxml");
     }
 
 }

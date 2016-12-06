@@ -30,24 +30,40 @@ public class AWSEc2Info {
 	
 	public static List<List<String>> GetInstance(Region region, AmazonEC2Client amazonEC2Client){
 		List<List<String>>  instanceinfolist = new ArrayList<List<String>> ();
+		System.out.println("-----"+region.getName());
 		try{
 
 			amazonEC2Client.setRegion(region);  
 
 		     DescribeInstancesResult describeInstances = amazonEC2Client.describeInstances();
+		     System.out.println(describeInstances.toString());
 		     List<Reservation> reservations = describeInstances.getReservations();
+		     System.out.println(reservations.size());
 		        for (Reservation reservation : reservations) {
 		            List<Instance> instances = reservation.getInstances();
 		             for (int i =0;i<instances.size();i++) {
 		            	 List<String> instance = new ArrayList<String>();
 		            	 instance.add(instances.get(i).getInstanceId());
+		            	 System.out.println(instances.get(i).getInstanceId());
 		            	 instance.add(instances.get(i).getArchitecture());
+		            	 System.out.println(instances.get(i).getArchitecture());
 		            	 instance.add(instances.get(i).getImageId());
+		            	 System.out.println(instances.get(i).getImageId());
 		            	 instance.add(instances.get(i).getInstanceType());
+		            	 System.out.println(instances.get(i).getInstanceType());
 		            	 instance.add(instances.get(i).getKeyName());
+		            	 System.out.println(instances.get(i).getKeyName());
 		            	 instance.add(instances.get(i).getPublicIpAddress());
+		            	 System.out.println(instances.get(i).getPublicIpAddress());
 		            	 instance.add(instances.get(i).getLaunchTime().toString());
+		            	 System.out.println(instances.get(i).getLaunchTime().toString());
 		            	 instance.add(instances.get(i).getState().getName());
+		            	 System.out.println(instances.get(i).getState().getName());
+		            	 String tags = "";
+		            	 for(int j = 0;j<instances.get(i).getTags().size(); j++){
+		            		 tags =tags+instances.get(i).getTags().get(j).getValue()+",";
+		            	 }
+		            	 instance.add(tags.substring(0, tags.length()-1));
 		            	 instanceinfolist.add(instance);
 		            	 
 		             }

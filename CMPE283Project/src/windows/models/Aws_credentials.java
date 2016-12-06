@@ -10,12 +10,22 @@ import java.util.List;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.s3.AmazonS3Client;
 
 
 public class Aws_credentials {
 	private String key_id;
 	private String secret_key;
+	public Region get_region() {
+		return Region.getRegion(Regions.fromName(region));
+	}
+	public void set_region(String r) {
+		this.region = r;
+	}
 	private String region;
 	private boolean auth;
 	public static Aws_credentials DefaultCred;
@@ -33,14 +43,14 @@ public class Aws_credentials {
 		key_id = "";
 		secret_key = "";
 		region = "";
-		auth = false;
+		auth = awsCredential.checkcredential(key_id, secret_key);
 		DefaultCred =this;
 	}
 	public Aws_credentials(String id,String secret){
 		key_id = id;
 		secret_key = secret;
 		region = "";
-		auth = false;
+		auth = awsCredential.checkcredential(key_id, secret_key);
 		DefaultCred =this;
 	}
 	
@@ -48,7 +58,7 @@ public class Aws_credentials {
 		key_id = id;
 		secret_key = secret;
 		this.region = region;
-		auth = false;
+		auth = awsCredential.checkcredential(key_id, secret_key);
 		DefaultCred =this;
 	}
 	
@@ -65,11 +75,23 @@ public class Aws_credentials {
 		secret_key = secret;
 	}
 	public AWSCredentialsProvider getProvider(){
+		if(awsCredential.checkcredential(key_id, secret_key)){
+			System.out.println("passcheck");
         AWSCredentials credentials = new BasicAWSCredentials( key_id, secret_key );
-        provider = new AWSStaticCredentialsProvider( credentials );
+        provider = new AWSStaticCredentialsProvider(credentials );
         return provider;
+		}else{
+			System.out.println("!@#$%^&*-- invalid awsCredentials");
+			return null;
+		}
 	}
 	public String toString(){
 		return "id:"+key_id+";secret:"+secret_key+";region:"+region+";authen:"+ auth;
+	}
+	public AmazonEC2Client getEC2(){
+		return new AmazonEC2Client(getProvider());
+	}
+	public AmazonS3Client getS3(){
+		return new AmazonS3Client(getProvider());
 	}
 }

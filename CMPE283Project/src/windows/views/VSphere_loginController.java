@@ -24,10 +24,12 @@ public class VSphere_loginController extends ViewController {
 
     @FXML
     void onclick(MouseEvent event) {
-//    	VSphere_credentials vc= new VSphere_credentials(ip_addr.getText(),user.getText(),password.getText());
-//    	ServiceInstance SI = vc.connect();
+    	VSphere_credentials vc= new VSphere_credentials("130.65.159.14","cmpe283_sec3_student@vsphere.local","cmpe-W6ik");//ip_addr.getText(),user.getText(),password.getText());
+    	ServiceInstance SI = vc.connect();
+    	vc.getVMs();
 //    	if(SI !=null){
     		mainApp.loadNewStage("./views/Aws_login.fxml");
+    		
 //    	}
     }
 
