@@ -1,0 +1,9 @@
+[
+  {
+    "Description": "Ubuntu",
+    "Format": "vmdk",
+    "UserBucket": {
+        "S3Bucket": "bucketformigrateaws",
+        "S3Key": "disk-0.vmdk"
+    }
+}]
