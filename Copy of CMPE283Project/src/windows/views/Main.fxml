@@ -147,7 +147,7 @@
                                     <content>
                                       <AnchorPane fx:id="Task_anchor" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                              <children>
-                                                <TableView fx:id="Task_Table" layoutX="39.0" layoutY="30.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+                                                <TableView layoutX="39.0" layoutY="30.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
                                                   <columns>
                                                     <TableColumn prefWidth="104.0" text="Timestamp" />
                                                     <TableColumn prefWidth="124.0" text="Target Name" />
@@ -179,16 +179,7 @@
                      <content>
                         <ScrollPane prefHeight="200.0" prefWidth="200.0">
                            <content>
-                              <AnchorPane prefHeight="97.0" prefWidth="1035.0">
-                                 <children>
-                                    <TableView layoutX="366.0" layoutY="-15.0" prefHeight="103.0" prefWidth="200.0" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5366.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
-                                      <columns>
-                                        <TableColumn prefWidth="75.0" text="C1" />
-                                        <TableColumn prefWidth="75.0" text="C2" />
-                                      </columns>
-                                    </TableView>
-                                 </children>
-                              </AnchorPane>
+                              <AnchorPane prefHeight="97.0" prefWidth="1035.0" />
                            </content></ScrollPane>
                      </content>
                   </TitledPane>

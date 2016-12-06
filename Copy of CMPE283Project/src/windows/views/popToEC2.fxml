@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.101" xmlns:fx="http://javafx.com/fxml/1" fx:controller="windows.views.PopEC2Controller">
+   <children>
+      <Label layoutX="107.0" layoutY="187.0" text="Security Group:" />
+      <Label layoutX="106.0" layoutY="230.0" text="S3 Bucket Key:" />
+      <TextField fx:id="bucketKey" layoutX="292.0" layoutY="226.0" />
+      <TextField fx:id="sgroup" layoutX="292.0" layoutY="183.0" />
+      <Label layoutX="107.0" layoutY="139.0" text="Pair Key" />
+      <Label layoutX="105.0" layoutY="94.0" text="Instance Type" />
+      <TextField fx:id="PairKey" layoutX="292.0" layoutY="135.0" />
+      <TextField fx:id="InstanceType" layoutX="292.0" layoutY="90.0" />
+      <Button layoutX="400.0" layoutY="344.0" mnemonicParsing="false" onMouseClicked="#closeStage" text="Cancel" />
+      <Button layoutX="483.0" layoutY="344.0" mnemonicParsing="false" onMouseClicked="#MigrateToEC2" text="Start Migrate" />
+      <Label layoutX="25.0" layoutY="30.0" text="Migrate to EC2">
+         <font>
+            <Font size="20.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>

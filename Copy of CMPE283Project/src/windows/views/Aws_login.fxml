@@ -18,6 +18,6 @@
          </font>
       </Label>
       <Button fx:id="login_btn" layoutX="391.0" layoutY="283.0" mnemonicParsing="false" onMouseClicked="#Login_clicked" prefHeight="25.0" prefWidth="74.0" text="Log in" />
-      <Label fx:id="Warning" layoutX="70.0" layoutY="258.0" text="Label" textFill="#f20404" />
+      <Label fx:id="Warning" layoutX="70.0" layoutY="258.0" text="Invalid Credential" textFill="#f20404" />
    </children>
 </AnchorPane>
