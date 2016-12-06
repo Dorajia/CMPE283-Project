@@ -100,33 +100,47 @@ public class EC2_Export {
 	}
 
 	public static String checkexportstatus(String exportid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
-        DescribeExportTasksRequest exportrequest = new DescribeExportTasksRequest();
+       try{
+		DescribeExportTasksRequest exportrequest = new DescribeExportTasksRequest();
         exportrequest.withExportTaskIds(exportid);
         exportrequest.setRequestCredentialsProvider(provider);
         DescribeExportTasksResult exportresult=amazonEC2Client.describeExportTasks(exportrequest);
                
-        System.out.println(exportresult); 
+
         return exportresult.toString();
+        } catch (Exception e)
+       {
+        	return "error" +e;
+       }
 	}
 	
-	public static String checkexporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+	public static String checkexporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {	
+		try{
         DescribeExportTasksRequest exportrequest = new DescribeExportTasksRequest();
         exportrequest.setRequestCredentialsProvider(provider);
         DescribeExportTasksResult exportresult=amazonEC2Client.describeExportTasks(exportrequest);
                
-        System.out.println(exportresult); 
+
         return exportresult.toString();
+		} catch (Exception e)
+       {
+        	return "error" +e;
+       }
 	}
 	
 	
 	public static String cancelexporttask(String exportid,AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) 
 	{
-
+		try{
 		CancelExportTaskRequest cancelexport = new CancelExportTaskRequest();
 		cancelexport.withExportTaskId(exportid);
 		CancelExportTaskResult cancelresult=amazonEC2Client.cancelExportTask(cancelexport);
-		 System.out.println(cancelresult);
-		 return cancelresult.toString();
+
+		 return cancelresult.toString();}
+		 catch (Exception e)
+	       {
+	        	return "error" +e;
+	       }
 		
 	}
 	

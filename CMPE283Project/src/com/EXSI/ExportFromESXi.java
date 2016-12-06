@@ -60,6 +60,7 @@ import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import com.EXSI.command;
+import com.jcraft.jsch.JSchException;
  
 /**
 http://www.doublecloud.org/2010/04/how-to-import-and-export-ovf-packages/ 
@@ -69,6 +70,13 @@ public class ExportFromESXi
 {
    public static LeaseProgressUpdater leaseProgUpdater;
 	private static String VMIPADDRESS;
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+     
+	public static List<String> exportfromesxi(ServiceInstance si,String hostip, String targetDir,String vmName,String VMUser,String VMPassword) throws IOException, JSchException, InterruptedException
+=======
+>>>>>>> Stashed changes
     
 	static HostSystem getHost(ServiceInstance si, String vm) throws InvalidProperty, RuntimeFault, RemoteException{
 		Folder rootFolder = si.getRootFolder();
@@ -86,6 +94,7 @@ public class ExportFromESXi
 	}
 	
 	public static List<String> exportfromesxi(ServiceInstance si,String hostip, String targetDir,String vmName) throws IOException
+>>>>>>> origin/master
       {
     	
         List<String> vmdkfile = new ArrayList<String>();
@@ -102,14 +111,19 @@ public class ExportFromESXi
 		if (findvm == null ) {
 			System.out.println("No such VM");;
 		}	
-		/*else{
+		else{
 			VMIPADDRESS = findvm.getGuest().getIpAddress();
 			System.out.println(VMIPADDRESS);
-			command.runCommand("apt-get install python-pip -y", VMIPADDRESS);
-			command.runCommand("pip install awscli", VMIPADDRESS);
-			command.runCommand("vmware-uninstall-tools.pl",VMIPADDRESS);
+			command.runCommand("apt-get install python-pip -y", VMIPADDRESS,VMUser,VMPassword);
+			command.runCommand("pip install awscli", VMIPADDRESS,VMUser,VMPassword);
+			command.runCommand("vmware-uninstall-tools.pl",VMIPADDRESS,VMUser,VMPassword);
 			Task poweroffTask = findvm.powerOffVM_Task();
 			poweroffTask.waitForTask();
+<<<<<<< HEAD
+			//if(poweroffTask.equals(Task.SUCCESS)){
+				vmdkfile=exportOvf(findvm,targetDir,si,hostip);		
+			//}
+=======
 			if(poweroffTask.equals(Task.SUCCESS)){*/
 		
 			vmdkfile=exportOvf(findvm,targetDir,si,hostip);
@@ -117,8 +131,10 @@ public class ExportFromESXi
 				return vmdkfile;
 
        // si.getServerConnection().logout();
+>>>>>>> origin/master
       }
-	//}
+		return vmdkfile;
+	}
      
     private static VirtualMachine findVM(String vmName, ServiceInstance si) throws InvalidProperty, RuntimeFault, RemoteException{
 		VirtualMachine findvm;

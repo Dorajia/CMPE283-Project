@@ -16,10 +16,10 @@ import com.jcraft.jsch.UserInfo;
 public class command
 { 
 	
-	public static void runCommand(String command,String ip) throws JSchException, IOException{
+	public static void runCommand(String command,String ip,String VMUser, String VMPassword) throws JSchException, IOException{
 		 JSch js = new JSch();
-		    Session s = js.getSession("dora", ip, 22);
-		    s.setPassword("yuanyuan");
+		    Session s = js.getSession(VMUser, ip, 22);
+		    s.setPassword(VMPassword);
 		    java.util.Properties config = new java.util.Properties();
 		    config.put("StrictHostKeyChecking", "no");
 		    s.setConfig(config);

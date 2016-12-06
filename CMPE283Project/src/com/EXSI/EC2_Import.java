@@ -104,24 +104,29 @@ public class EC2_Import {
 		
 	}
 	
-	public static String checkimportstatus(String importid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
+	public static String checkimportstatus(String importid, AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {
+		try{
         DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
         imagerequest.withImportTaskIds(importid);
         imagerequest.setRequestCredentialsProvider(provider);
         DescribeImportImageTasksResult importresult=amazonEC2Client.describeImportImageTasks(imagerequest);
                
-        System.out.println(importresult);
         
-        return importresult.toString();
+        return importresult.toString();}
+		 catch (Exception e)
+	       {
+	        	return "error" +e;
+	       }
         
 	}
 	
 	public static String checkimporthistory(AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) {		
-        DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
+        try{
+        	
+		DescribeImportImageTasksRequest imagerequest = new DescribeImportImageTasksRequest();
         imagerequest.setRequestCredentialsProvider(provider);
         DescribeImportImageTasksResult importresult=amazonEC2Client.describeImportImageTasks(imagerequest);
-               
-        System.out.println(importresult.toString());
+             
         
         
  /*       imagerequest.setGeneralProgressListener(new ProgressListener() {
@@ -132,17 +137,43 @@ public class EC2_Import {
 			}
 			});*/
         return importresult.toString();
+        } catch (Exception e)
+       {
+        	return "error" +e;
+       }
         
 	}
 
 	public static String cancelimporttask(String importid,AWSCredentialsProvider provider,AmazonEC2Client amazonEC2Client) 
 	{
-
+		try{
 		CancelImportTaskRequest cancelimport = new CancelImportTaskRequest();
 		cancelimport.withImportTaskId(importid);
 		CancelImportTaskResult cancelresult=amazonEC2Client.cancelImportTask(cancelimport);
 		System.out.println(cancelresult);
 		return cancelresult.toString();
+		} catch (Exception e)
+       {
+        	return "error" +e;
+       }
+	}
+	
+	public static String launchInstance(AmazonEC2Client ec2client,String image_id,String instanceType, String key,String SecurityGroup){
+		RunInstancesRequest runInstancesRequest =
+			      new RunInstancesRequest();
+
+		  runInstancesRequest.withImageId(image_id)
+		                     .withInstanceType(instanceType)
+		                     .withMinCount(1)
+		                     .withMaxCount(1)
+		                     .withKeyName(key)
+		                     .withSecurityGroups(SecurityGroup);
+		  RunInstancesResult runInstancesResult =
+			      ec2client.runInstances(runInstancesRequest);	  
+			  
+		String instance_id = runInstancesResult.getReservation().toString();
+		System.out.println(instance_id);
+		return instance_id;
 	}
 	
 	public static String launchInstance(AmazonEC2Client ec2client,String image_id,String instanceType, String key,String SecurityGroup){

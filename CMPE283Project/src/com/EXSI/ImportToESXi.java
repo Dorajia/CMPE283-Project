@@ -1,5 +1,3 @@
-package com.EXSI;
-
 /*================================================================================
 Copyright (c) 2008 VMware, Inc. All Rights Reserved.
  
@@ -28,9 +26,17 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWIS
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ================================================================================*/
+package com.EXSI;
+ 
 import java.io.*;
 import java.net.*;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.net.ssl.*;
+
+import com.EXSI.LeaseProgressUpdater;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.ComputeResource;
 import com.vmware.vim25.mo.Datacenter;
@@ -41,9 +47,12 @@ import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.ServiceInstance;
+import com.vmware.vim25.mo.VirtualMachine;
  
 /**
-http://www.doublecloud.org/2010/04/how-to-import-and-export-ovf-packages/
+ * Deploy VM or vApp from local disk to an ESX(i) server
+ * http://vijava.sf.net
+ * @author Steve Jin (sjin at vmware.com)
  */
  
 public class ImportToESXi
@@ -51,58 +60,76 @@ public class ImportToESXi
     private static final int CHUCK_LEN = 64 * 1024;
  
     public static LeaseProgressUpdater leaseUpdater;
+	private static BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));		
+	private static ServiceInstance si = null;
+	private static ManagedEntity[] hostInfo = null;
+	private static Folder vAppFolder;
+	private static Datacenter dc;
+	private static VirtualMachine vm;
  
-    public static void main(String[] args) throws Exception
-    {
-/*        if (args.length < 6)
-        {
-            System.out.println(
-            "java ImportLocalOvfVApp <targetURL> <username> <password> <hostip> <OVFFile LocalPath> <NewVMName>");
-            System.out.println(
-            "java ImportLocalOvfVApp https://10.20.140.47/sdk Administrator password 10.17.204.115 E:/Downloads/Nostalgia.ovf NewVM");
-            return;
-        }
- 
-        ServiceInstance si = new ServiceInstance(new URL(args[0]), args[1], args[2], true);
- 
-        String ovfLocal = args[4];
-        String hostip = args[3];
-        String newVmName = args[5];*/
- 
-        ServiceInstance si = new ServiceInstance(new URL("https://192.168.170.135/sdk"), "root", "yuanyuan", true);
-        String newVmName = "YuanyuanJia-eclipse";
-        String hostip = "192.168.170.135";
-//        String entityType = "VirtualMachine";
-        String ovfLocal = "/Users/Dora/Desktop/export-i-fgtsjqv3.ovf";
+    public static void importVM(ServiceInstance si,String hostip,String ovfLocal,String newVmName) throws IOException
+    {	
+	        String pathname= "CMPE LABS/CMPE283 SEC3/workspace/Yuanyuan-322";
+	       // si = new ServiceInstance(new URL("https://192.168.170.135/sdk"), "root", "yuanyuan", true);	
+	        
+			//si = new ServiceInstance(new URL("https://"+IPaddress+"/sdk"), loginname, password, true);
+			Folder rootFolder = si.getRootFolder();	
+			String[] pathparts = pathname.split("/");
+			
+			String dccenter = pathparts[0];
+			String poolname = pathparts[1];
+			String vmpath = null;
+			// construct vAppFolder path 
+			for(int b = 1; b<pathparts.length;b++)
+			{
+				if (b==1)
+					vmpath = pathparts[b]+"/";
+				else
+					vmpath += pathparts[b]+"/";				
+			}
+			
+			if (vmpath==null)
+				vAppFolder = (Folder) si.getSearchIndex().findByInventoryPath(dccenter+"/vm/");
+			else
+				vAppFolder = (Folder) si.getSearchIndex().findByInventoryPath(dccenter+"/vm/"+vmpath);	
+			
         
-        HostSystem host = (HostSystem) si.getSearchIndex().findByIp(null, hostip, false);
- 
+		ManagedEntity[] datacenter = new InventoryNavigator(si.getRootFolder()).searchManagedEntities("Datacenter");
+		Datacenter datacenterobj = (Datacenter) datacenter[0];
+		
+		//String ovfLocal = "/Users/Dora/Desktop/export-i-ffnwj9pb.ovf";
+        //String hostip = "192.168.170.135";
+        //String newVmName = "Yuanyuan-Ub1404-import";
+		
+       ManagedEntity[]  hosts = new InventoryNavigator(si.getRootFolder()).searchManagedEntities("HostSystem");
+        HostSystem host = (HostSystem) hosts[0];
+       ManagedEntity[] rps = new InventoryNavigator(si.getRootFolder()).searchManagedEntities("ResourcePool");
+        
+        ResourcePool rp = (ResourcePool) rps[0];
+        //HostSystem host = (HostSystem) si.getSearchIndex().findByIp(null, hostip, false);
+        
+		/*ResourcePool rp = (ResourcePool) new
+				InventoryNavigator(rootFolder).searchManagedEntity("ResourcePool", poolname);*/
+        Folder vmFolder = datacenterobj.getVmFolder();
+        System.out.println("Resource pool Name: "+rp.getName());
         System.out.println("Host Name : " + host.getName());
         System.out.println("Network : " + host.getNetworks()[0].getName());
         System.out.println("Datastore : " + host.getDatastores()[0].getName());
-       
-        Folder vmFolder = (Folder) host.getVms()[0].getParent();
-		ManagedEntity[] datacenter = new InventoryNavigator(si.getRootFolder()).searchManagedEntities("Datacenter");
-		for(ManagedEntity managedEntity : datacenter){
-			Datacenter datacenterobj = (Datacenter) managedEntity;
-			System.out.println("Datacenter Folder: "+ datacenterobj.getName());
-			System.out.println("VM Folder: "+ datacenterobj.getVmFolder().getName());
-			vmFolder = datacenterobj.getVmFolder();
-		}
-       // vmFolder = (Folder) si.getSearchIndex().findByInventoryPath(host.getDatastores()[0].getName()+"/vm/");
-        
+        System.out.println(vmFolder.getName());
+ 
         OvfCreateImportSpecParams importSpecParams = new OvfCreateImportSpecParams();
         importSpecParams.setHostSystem(host.getMOR());
         importSpecParams.setLocale("US");
+        importSpecParams.setIpAllocationPolicy("DHCP");
+        importSpecParams.setIpProtocol("IPv4");
         importSpecParams.setEntityName(newVmName);
         importSpecParams.setDeploymentOption("");
         OvfNetworkMapping networkMapping = new OvfNetworkMapping();
-        networkMapping.setName("VM Network");
+        networkMapping.setName("Network 1");
         networkMapping.setNetwork(host.getNetworks()[0].getMOR()); // network);
         importSpecParams.setNetworkMapping(new OvfNetworkMapping[] { networkMapping });
-       // importSpecParams.setPropertyMapping(null);
-        importSpecParams.setDiskProvisioning("Thin");
-        
+        importSpecParams.setPropertyMapping(null);
+        importSpecParams.setResourceMapping(null);
         String ovfDescriptor = readOvfContent(ovfLocal);
         if (ovfDescriptor == null)
         {
@@ -110,14 +137,11 @@ public class ImportToESXi
             return;
         }
  
-        ovfDescriptor = escapeSpecialChars(ovfDescriptor);
         System.out.println("ovfDesc:" + ovfDescriptor);
- 
-        ResourcePool rp = ((ComputeResource)host.getParent()).getResourcePool();
-        System.out.println("Resource pool: "+rp.getName());
-        
+
         OvfCreateImportSpecResult ovfImportResult = si.getOvfManager().createImportSpec(
                 ovfDescriptor, rp, host.getDatastores()[0], importSpecParams);
+ 
         if(ovfImportResult==null)
         {
             si.getServerConnection().logout();
@@ -128,12 +152,8 @@ public class ImportToESXi
         System.out.println("Total bytes: " + totalBytes);
  
         HttpNfcLease httpNfcLease = null;
-        VirtualMachineImportSpec importVM = new  VirtualMachineImportSpec();
-        importVM = (VirtualMachineImportSpec) ovfImportResult.importSpec ;
-        //httpNfcLease = rp.importVApp(ovfImportResult.importSpec, vmFolder, host);
-        VirtualMachineConfigSpec configSpec = new VirtualMachineConfigSpec();
-       // importVM.setConfigSpec(configSpec);
-        httpNfcLease = rp.importVApp(importVM, vmFolder, host);
+        httpNfcLease = rp.importVApp(ovfImportResult.getImportSpec(), vmFolder, host);
+ 
         // Wait until the HttpNfcLeaseState is ready
         HttpNfcLeaseState hls;
         for(;;)
@@ -166,7 +186,6 @@ public class ImportToESXi
                     {
                         System.out.println("Import key==OvfFileItem device id: " + deviceKey);
                         String absoluteFile = new File(ovfLocal).getParent() + File.separator + ovfFileItem.getPath();
-                        absoluteFile = "/Users/Dora/Desktop/export-i-fgtsjqv3-disk-1.vmdk";
                         String urlToPost = deviceUrl.getUrl().replace("*", hostip);
                         uploadVmdkFile(ovfFileItem.isCreate(), absoluteFile, urlToPost, bytesAlreadyWritten, totalBytes);
                         bytesAlreadyWritten += ovfFileItem.getSize();
@@ -198,7 +217,7 @@ public class ImportToESXi
         return totalBytes;
     }
  
-    private static void uploadVmdkFile(boolean put, String diskFilePath, String urlStr,
+    public static void uploadVmdkFile(boolean put, String diskFilePath, String urlStr,
             long bytesAlreadyWritten, long totalBytes) throws IOException
     {
         HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()
@@ -251,18 +270,16 @@ public class ImportToESXi
  
     public static String readOvfContent(String ovfFilePath) throws IOException
     {
-        StringBuffer strContent = new StringBuffer();
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(ovfFilePath)));
-        String lineStr;
-        while ((lineStr = in.readLine()) != null)
-        {
-            strContent.append(lineStr);
+        StringBuffer strContent = new StringBuffer("");
+        int x;
+        InputStream fis = new FileInputStream(ovfFilePath);
+        while ((x = fis.read()) != -1) {
+            strContent.append((char) x);
         }
-        in.close();
-        return strContent.toString();
+        return strContent + "";
     }
  
-    private static void printHttpNfcLeaseInfo(HttpNfcLeaseInfo info)
+    public static void printHttpNfcLeaseInfo(HttpNfcLeaseInfo info)
     {
         System.out.println("================ HttpNfcLeaseInfo ================");
         HttpNfcLeaseDeviceUrl[] deviceUrlArr = info.getDeviceUrl();
@@ -278,7 +295,7 @@ public class ImportToESXi
         System.out.println("==================================================");
     }
  
-    private static void printOvfFileItem(OvfFileItem fi)
+    public static void printOvfFileItem(OvfFileItem fi)
     {
         System.out.println("================ OvfFileItem ================");
         System.out.println("chunkSize: " + fi.getChunkSize());
@@ -289,9 +306,4 @@ public class ImportToESXi
         System.out.println("==============================================");
     }
  
-    public static String escapeSpecialChars(String str)
-    {
-        str = str.replaceAll("<", "&lt;");
-        return str.replaceAll(">", "&gt;"); // do not escape "&" -> "&amp;", "\"" -> "&quot;"
-    }
 }

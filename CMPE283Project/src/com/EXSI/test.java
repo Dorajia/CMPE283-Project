@@ -43,6 +43,10 @@ public class test {
         {
         	System.out.println("valid credential!");
         }
+        else
+        {
+        	System.out.println("invalid credential!");
+        }
         //get region list
         List<String> regionlist = new ArrayList<String>();
         regionlist = AWSEc2Info.getAllEc2Regions();
@@ -63,8 +67,10 @@ public class test {
         instanceInfo = AWSEc2Info.GetInstance(region, amazonEC2Client);
         for(int i =0;i<instanceInfo.size();i++)
         {
+        	//the first instance
         	for (int j=0;j<instanceInfo.get(i).size();j++)
         	{
+        		//intance information list
         		System.out.println(instanceInfo.get(i).get(j));
         	}
         }
@@ -73,14 +79,16 @@ public class test {
         //Folder path to store the vmdk and ova file
         String targetDir = "/Users/Dora/Desktop/";
         //bucketName
-        String bucketName = "migration-test-2";
+        String bucketName = "migration-final-test-import";
 
         //EC2 import process 
-        ServiceInstance si = new ServiceInstance(new URL("https://192.168.170.135/sdk"), "root", "yuanyuan", true);
-        String vmName = "server";
-        String hostip = "192.168.170.135";
- 
-		vmdkfile=ExportFromESXi.exportfromesxi(si,hostip,targetDir,vmName);
+        ServiceInstance si = new ServiceInstance(new URL("https://192.168.170.167/sdk"), "root", "yuanyuan", true);
+        String vmName = "Ubuntu-14.04-server";
+        String hostip = "192.168.170.167";
+        String VMuser = "dora";
+        String VMPassword = "yuanyuan";
+		
+        vmdkfile=ExportFromESXi.exportfromesxi(si,hostip,targetDir,vmName,VMuser,VMPassword);
 
 		Boolean Bucketresult = S3.createBucket(s3client, bucketName, region);
 		String importid= null;
@@ -91,8 +99,8 @@ public class test {
 		}
 		
         //EC2 export process
-		String instanceid = "i-00636c3f1d7938c44";
-        String exportname = EC2_Export.ec2Export(amazonEC2Client,s3client,region, bucketName, instanceid); 
+		String instanceid = "i-0d3c7aedf6649bc2f";
+        String exportname = EC2_Export.ec2Export(amazonEC2Client,s3client,region,bucketName,instanceid); 
         
 
         String checkresult;
@@ -110,7 +118,26 @@ public class test {
         System.out.println(checkresult);
         
         //download exported ova       
-        String filepath = targetDir+exportname;
+
+        String filepath = targetDir+exportname+".ova";
         S3.downloadfromS3(s3client, filepath, bucketName,exportname);
+        
+        //import process 
+        //untar ova file to OVF and vmdk file
+		 List<String> untarresult = new ArrayList<String>();
+		 untarresult = unTarOva.unTar(filepath, targetDir);
+		
+		 for(int i=0;i<untarresult.size();i++)
+		{
+			if(untarresult.get(i).substring(untarresult.get(i).lastIndexOf(".") + 1).equals("ovf"))
+			{
+				//import to ESXi host
+				String ovflocal = targetDir+untarresult.get(i);
+				String newVmName = "New VM name";
+				ImportToESXi.importVM(si,hostip,ovflocal,newVmName);
+			}
+			
+		}
+        
 	}
 }
