@@ -144,4 +144,22 @@ public class EC2_Import {
 		System.out.println(cancelresult);
 		return cancelresult.toString();
 	}
+	
+	public static String launchInstance(AmazonEC2Client ec2client,String image_id,String instanceType, String key,String SecurityGroup){
+		RunInstancesRequest runInstancesRequest =
+			      new RunInstancesRequest();
+
+		  runInstancesRequest.withImageId(image_id)
+		                     .withInstanceType(instanceType)
+		                     .withMinCount(1)
+		                     .withMaxCount(1)
+		                     .withKeyName(key)
+		                     .withSecurityGroups(SecurityGroup);
+		  RunInstancesResult runInstancesResult =
+			      ec2client.runInstances(runInstancesRequest);	  
+			  
+		String instance_id = runInstancesResult.getReservation().toString();
+		System.out.println(instance_id);
+		return instance_id;
+	}
 }

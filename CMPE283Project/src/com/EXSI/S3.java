@@ -56,15 +56,19 @@ public class S3 {
 	        	// Note that CreateBucketRequest does not specify region. So bucket is 
 	        	// created in the region specified in the client.
 	        	String regionname = region.getName();
+	        	System.out.print(region.getName()+"  "+ bucketname);
 	        	CreateBucketRequest bucketrequest = new CreateBucketRequest(bucketname,regionname);
-
+	        	System.out.print(1);
 	        	s3client.createBucket(bucketrequest);
+	        	System.out.print(2);
 	            AccessControlList bucketAcl = s3client.getBucketAcl(bucketname);
+	            System.out.print(3);
 	            bucketAcl.grantPermission(new EmailAddressGrantee("vm-import-export@amazon.com"), Permission.Write);
-	            bucketAcl.grantPermission(new EmailAddressGrantee("vm-import-export@amazon.com"), Permission.ReadAcp);
-
+	            System.out.print(4);
+	            bucketAcl.grantPermission(new EmailAddressGrantee("vm-import-export@amazon.com"), Permission.Read);
+	            System.out.print(5);
 	            s3client.setBucketAcl(bucketname, bucketAcl);
-	        	
+	            System.out.print(6);
 	            result = true;
 	        	
 	        	System.out.println("Bucket created succesfully");	        	

@@ -10,6 +10,8 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -24,12 +26,12 @@
             <items>
               <MenuItem fx:id="vCenterAccount" mnemonicParsing="false" text="Switch vCenter" />
                   <MenuItem fx:id="Aws_account" mnemonicParsing="false" text="Swtich AWS account" />
-                  <MenuItem mnemonicParsing="false" text="Close" />
+                  <MenuItem fx:id="close_menu_btn" mnemonicParsing="false" onAction="#closeWindow" text="Close" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Action">
             <items>
-              <MenuItem fx:id="Migrate_menu" mnemonicParsing="false" text="Migrate" />
+              <MenuItem fx:id="Migrate_menu" mnemonicParsing="false" onAction="#startMigration" text="Migrate" />
                 <Menu mnemonicParsing="false" text="Edit">
                   <items>
                     <MenuItem mnemonicParsing="false" text="Delete" />
@@ -45,7 +47,7 @@
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                <children>
                   <Button fx:id="migrate_btn" layoutX="14.0" layoutY="16.0" mnemonicParsing="false" onMouseClicked="#startMigration" text="Migrate" />
-                  <Button fx:id="Cancel_btn" layoutX="85.0" layoutY="16.0" mnemonicParsing="false" text="Cancel Migrate" />
+                  <Button fx:id="Cancel_btn" layoutX="85.0" layoutY="16.0" mnemonicParsing="false" onMouseClicked="#cencelMigrate" text="Cancel Migrate" />
                </children></AnchorPane>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="99.0" prefWidth="158.0">
                <children>
@@ -143,7 +145,19 @@
                                   </Tab>
                                   <Tab text="Tasks">
                                     <content>
-                                      <AnchorPane fx:id="Task_anchor" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                                      <AnchorPane fx:id="Task_anchor" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                             <children>
+                                                <TableView layoutX="39.0" layoutY="30.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+                                                  <columns>
+                                                    <TableColumn prefWidth="104.0" text="Timestamp" />
+                                                    <TableColumn prefWidth="124.0" text="Target Name" />
+                                                      <TableColumn prefWidth="81.0" text="From" />
+                                                      <TableColumn prefWidth="84.0" text="To" />
+                                                      <TableColumn text="Task Name" />
+                                                      <TableColumn prefWidth="128.0" text="Status" />
+                                                  </columns>
+                                                </TableView>
+                                             </children></AnchorPane>
                                     </content>
                                   </Tab>
                                     <Tab text="Events">
@@ -163,7 +177,10 @@
                <children>
                   <TitledPane prefHeight="131.0" prefWidth="1052.0" text="Recent Task">
                      <content>
-                        <ScrollPane prefHeight="200.0" prefWidth="200.0" />
+                        <ScrollPane prefHeight="200.0" prefWidth="200.0">
+                           <content>
+                              <AnchorPane prefHeight="97.0" prefWidth="1035.0" />
+                           </content></ScrollPane>
                      </content>
                   </TitledPane>
                </children></AnchorPane>

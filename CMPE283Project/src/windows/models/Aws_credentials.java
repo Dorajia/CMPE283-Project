@@ -74,6 +74,9 @@ public class Aws_credentials {
 	public void set_secret(String secret){
 		secret_key = secret;
 	}
+	public boolean get_auth(){
+		return this.auth;
+	}
 	public AWSCredentialsProvider getProvider(){
 		if(awsCredential.checkcredential(key_id, secret_key)){
 			System.out.println("passcheck");

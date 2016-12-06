@@ -5,11 +5,13 @@ import java.io.IOException;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.stage.*;
 import windows.views.*;
 import windows.models.*;
 
@@ -30,8 +32,13 @@ public class Main1 extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		 this.primaryStage = primaryStage;
-	        this.primaryStage.setTitle("Login AWS");
-	        loadNewStage(vSphereLoginR);
+	     this.primaryStage.setTitle("Login AWS");
+	     loadNewStage(vSphereLoginR);
+	     primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+	          public void handle(WindowEvent we) {
+	              System.out.println("Stage is closing");
+	          }
+	      }); 
 	}
 
 	public void loadNewStage(String sceneR){
@@ -59,8 +66,39 @@ public class Main1 extends Application {
 		
 		
 	}
+	public Stage getStage(){
+		return primaryStage;
+	}
 	
 	public static void main(String[] args) {
 		launch(args);
 	}
+	
+	public void showEC2Config(String selectItem) {
+	    try {
+	        // Load the fxml file and create a new stage for the popup dialog.
+	        FXMLLoader loader = new FXMLLoader();
+	        loader.setLocation(Main1.class.getResource("./views/popToEC2.fxml"));
+	        AnchorPane page = (AnchorPane) loader.load();
+
+	        // Create the dialog Stage.
+	        Stage dialogStage = new Stage();
+	        dialogStage.setTitle("Edit AWS Import configration");
+	        dialogStage.initModality(Modality.WINDOW_MODAL);
+	        dialogStage.initOwner(primaryStage);
+	        Scene scene = new Scene(page);
+	        dialogStage.setScene(scene);
+
+	        // Set the person into the controller.
+	        PopEC2Controller controller = loader.getController();
+	        controller.setDialogStage(dialogStage);
+	        controller.setSelectItem(selectItem);
+
+	    } catch (IOException e) {
+	        e.printStackTrace();
+
+	    }
+	}
+
+	
 }

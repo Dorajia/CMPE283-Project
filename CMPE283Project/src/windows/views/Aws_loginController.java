@@ -1,5 +1,7 @@
 package windows.views;
 
+import org.controlsfx.dialog.Dialogs;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -24,7 +26,15 @@ public class Aws_loginController extends ViewController {
     	newCred.set_id(aws_id.getText());
     	newCred.set_secret(aws_secret_key.getText());
     	System.out.println(newCred.toString());
-    	mainApp.loadNewStage("./views/SelectRegion.fxml");
+    	if(newCred.get_auth()){
+    		mainApp.loadNewStage("./views/SelectRegion.fxml");
+    	}else{
+    		  Dialogs.create()
+              .title("Invalid Credential")
+              .masthead("Invalid Credential")
+              .message("Please check your credential and try again.")
+              .showWarning();
+    	}
     }
 
 }

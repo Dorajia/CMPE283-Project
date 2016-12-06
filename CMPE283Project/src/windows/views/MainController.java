@@ -8,6 +8,7 @@ import java.util.List;
 import com.EXSI.*;
 import com.amazonaws.regions.Regions;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -18,11 +19,12 @@ import javafx.scene.control.TreeView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
 import windows.models.Aws_credentials;
 import windows.models.VM;
 import windows.models.VSphere_credentials;
 
-
+import javafx.scene.control.TableView;
 
 public class MainController extends ViewController{
 
@@ -52,7 +54,8 @@ public class MainController extends ViewController{
 
     @FXML
     private Pane awsSummary;
-
+    @FXML
+    private TableView<String> Task_Table;
     @FXML
     private Label InstanceNamelabel;
 
@@ -70,6 +73,7 @@ public class MainController extends ViewController{
 
     @FXML
     private Label Tags_label;
+    
 
     @FXML
     private Label Status_label;
@@ -102,6 +106,9 @@ public class MainController extends ViewController{
     private Label CPU_label;
 
     @FXML
+    private MenuItem close_menu_btn;
+    
+    @FXML
     private AnchorPane Task_anchor;
 
     @FXML
@@ -110,17 +117,41 @@ public class MainController extends ViewController{
     private List<VM> vms;
     private TreeItem<String> vmRoot;
     private TreeItem<String> EC2;
+
     
     @FXML
     private void startMigration(){
     	if(Instance_tree_view.getSelectionModel().getSelectedItem().getParent().equals(vmRoot)){
-    		List<String> vmdkfile = new ArrayList<String>();
-    		try {
-				vmdkfile = ExportFromESXi.exportfromesxi(VSphere_credentials.defaultCred.getSI(), VSphere_credentials.defaultCred.get_ip(), "./", Instance_tree_view.getSelectionModel().getSelectedItem().getValue());
+    		mainApp.showEC2Config(Instance_tree_view.getSelectionModel().getSelectedItem().getValue());
+    	}else if(Instance_tree_view.getSelectionModel().getSelectedItem().getParent().equals(EC2)){
+    		String s3_bucket = "testcmpe283";
+    		String instanceid = Instance_tree_view.getSelectionModel().getSelectedItem().getValue();
+    		String exportname;
+			try {
+				exportname = EC2_Export.ec2Export(Aws_credentials.DefaultCred.getEC2(),Aws_credentials.DefaultCred.getS3(),Aws_credentials.DefaultCred.get_region(), s3_bucket, instanceid);
+		         String checkresult;
+		            //check import history
+
+		            //check export status with export id
+		            checkresult=EC2_Export.checkexportstatus(exportname, Aws_credentials.DefaultCred.getProvider(),Aws_credentials.DefaultCred.getEC2());
+		            System.out.println(checkresult);
+		            //check export history
+		            checkresult=EC2_Export.checkexporthistory(Aws_credentials.DefaultCred.getProvider(),Aws_credentials.DefaultCred.getEC2());
+		            System.out.println(checkresult);
+		            
+		            //download exported ova       
+		            String filepath = "./"+exportname;
+		            S3.downloadfromS3(Aws_credentials.DefaultCred.getS3(), filepath, s3_bucket,exportname);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+            
+
+   
     	}
     }
     
@@ -185,4 +216,16 @@ public class MainController extends ViewController{
     	}
     	
     }
+    
+    @FXML
+    void cencelMigrate(MouseEvent event) {
+    	
+    }
+
+    @FXML
+    void closeWindow(ActionEvent event) {
+    	mainApp.getStage().close();
+    }
+    
+
 }
